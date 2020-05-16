@@ -25,7 +25,7 @@ void FrameLimiter()
 		// slow down the client shell
 		while(fDifference < 1000.0 / fps)
 		{
-			Sleep(0);
+			Sleep(g_nFrameLimiterSleep);
 			QueryPerformanceCounter(&liEnd);
 			fDifference = double(liEnd.QuadPart - liStart.QuadPart);
 			fDifference /= double(liFrequency.QuadPart / 1000);

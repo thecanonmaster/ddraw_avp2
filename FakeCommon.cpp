@@ -10,6 +10,7 @@ DWORD g_dwHeight = 768;
 BOOL g_bWindowedSet = FALSE;
 DWORD g_bWindowed = 0;
 float g_fMaxFPS = 60;
+DWORD g_nFrameLimiterSleep = 0;
 BOOL g_bCameraFOVFix = FALSE;
 BOOL g_bCameraFOVFix2 = FALSE;
 BOOL g_bViewModelFOVFix = FALSE;

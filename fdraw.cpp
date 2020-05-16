@@ -91,6 +91,7 @@ void ReadConfig(char* szFilename)
 	g_bNoCompatWarning = GetPrivateProfileInt("Misc", "NoCompatWarning", FALSE, szFilename);
 	g_bDontShutdownRenderer = GetPrivateProfileInt("Misc", "DontShutdownRenderer", FALSE, szFilename);
 	g_bShowFPS = GetPrivateProfileInt("Misc", "ShowFPS", FALSE, szFilename);
+	g_nFrameLimiterSleep = GetPrivateProfileInt("Misc", "FrameLimiterSleep", FALSE, szFilename);
 
 	g_fMaxFPS = GetPrivateProfileInt("Compatibility", "MaxFPS", 60, szFilename);
 	g_bIntelHDFix = GetPrivateProfileInt("Compatibility", "Fix_IntelHD", FALSE, szFilename);
@@ -165,10 +166,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 				
 			logf(0, LINFO, "Framelimiter = %d FPS", (int)g_fMaxFPS);
+			timeBeginPeriod(1);
 		}
 		break;
 
 		case DLL_PROCESS_DETACH:
+			timeEndPeriod(1);
 			ClearMultiLinesHolder();
 			FontList_Clear(FALSE);
 			fclose( g_LogFile );

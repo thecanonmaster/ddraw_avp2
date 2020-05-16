@@ -9,6 +9,7 @@ extern DWORD g_dwHeight;
 extern BOOL g_bWindowedSet;
 extern DWORD g_bWindowed;
 extern float g_fMaxFPS;
+extern DWORD g_nFrameLimiterSleep;
 extern BOOL g_bCameraFOVFix;
 extern BOOL g_bCameraFOVFix2;
 extern BOOL g_bViewModelFOVFix; 
