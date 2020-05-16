@@ -36,7 +36,7 @@ extern LONG g_lRMILastY;
 extern int g_nLastFrameRate;
 
 #define APP_NAME		"D3D7FIX v%.2f for Aliens vs Predator 2"
-#define APP_VERSION		0.12f
+#define APP_VERSION		0.13f
 
 #define FONT_LIST_UPDATE_TIME		5.0f
 #define FONT_LIST_CLEANUP_TIME		180.0f
