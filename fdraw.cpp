@@ -49,37 +49,37 @@ struct ddraw_dll
 	FARPROC	GetSurfaceFromDC;
 	FARPROC	RegisterSpecialCase;
 	FARPROC	ReleaseDDThreadLock;
-} ddraw;
+} g_DDraw;
 
-__declspec(naked) void FakeAcquireDDThreadLock()			{ _asm { jmp [ddraw.AcquireDDThreadLock] } }
-__declspec(naked) void FakeCheckFullscreen()				{ _asm { jmp [ddraw.CheckFullscreen] } }
-__declspec(naked) void FakeCompleteCreateSysmemSurface()	{ _asm { jmp [ddraw.CompleteCreateSysmemSurface] } }
-__declspec(naked) void FakeD3DParseUnknownCommand()			{ _asm { jmp [ddraw.D3DParseUnknownCommand] } }
-__declspec(naked) void FakeDDGetAttachedSurfaceLcl()		{ _asm { jmp [ddraw.DDGetAttachedSurfaceLcl] } }
-__declspec(naked) void FakeDDInternalLock()					{ _asm { jmp [ddraw.DDInternalLock] } }
-__declspec(naked) void FakeDDInternalUnlock()				{ _asm { jmp [ddraw.DDInternalUnlock] } }
-__declspec(naked) void FakeDSoundHelp()						{ _asm { jmp [ddraw.DSoundHelp] } }
+__declspec(naked) void FakeAcquireDDThreadLock()			{ _asm { jmp [g_DDraw.AcquireDDThreadLock] } }
+__declspec(naked) void FakeCheckFullscreen()				{ _asm { jmp [g_DDraw.CheckFullscreen] } }
+__declspec(naked) void FakeCompleteCreateSysmemSurface()	{ _asm { jmp [g_DDraw.CompleteCreateSysmemSurface] } }
+__declspec(naked) void FakeD3DParseUnknownCommand()			{ _asm { jmp [g_DDraw.D3DParseUnknownCommand] } }
+__declspec(naked) void FakeDDGetAttachedSurfaceLcl()		{ _asm { jmp [g_DDraw.DDGetAttachedSurfaceLcl] } }
+__declspec(naked) void FakeDDInternalLock()					{ _asm { jmp [g_DDraw.DDInternalLock] } }
+__declspec(naked) void FakeDDInternalUnlock()				{ _asm { jmp [g_DDraw.DDInternalUnlock] } }
+__declspec(naked) void FakeDSoundHelp()						{ _asm { jmp [g_DDraw.DSoundHelp] } }
 //HRESULT WINAPI FakeDirectDrawCreate( GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter);
-__declspec(naked) void FakeDirectDrawCreate()				{ _asm { jmp [ddraw.DirectDrawCreate] } }
+__declspec(naked) void FakeDirectDrawCreate()				{ _asm { jmp [g_DDraw.DirectDrawCreate] } }
 // HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags, LPDIRECTDRAWCLIPPER FAR *lplpDDClipper, IUnknown FAR *pUnkOuter );
-__declspec(naked) void FakeDirectDrawCreateClipper()		{ _asm { jmp [ddraw.DirectDrawCreateClipper] } }
+__declspec(naked) void FakeDirectDrawCreateClipper()		{ _asm { jmp [g_DDraw.DirectDrawCreateClipper] } }
 HRESULT WINAPI FakeDirectDrawCreateEx( GUID FAR * lpGuid, LPVOID *lplpDD, REFIID iid, IUnknown FAR *pUnkOuter);
-//__declspec(naked) void FakeDirectDrawCreateEx()				{ _asm { jmp [ddraw.DirectDrawCreateEx] } }
+//__declspec(naked) void FakeDirectDrawCreateEx()				{ _asm { jmp [g_DDraw.DirectDrawCreateEx] } }
 //HRESULT WINAPI DirectDrawEnumerateA( LPDDENUMCALLBACKA lpCallback, LPVOID lpContext );
-__declspec(naked) void FakeDirectDrawEnumerateA()			{ _asm { jmp [ddraw.DirectDrawEnumerateA] } }
+__declspec(naked) void FakeDirectDrawEnumerateA()			{ _asm { jmp [g_DDraw.DirectDrawEnumerateA] } }
 // HRESULT WINAPI DirectDrawEnumerateExA( LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags );
-__declspec(naked) void FakeDirectDrawEnumerateExA()			{ _asm { jmp [ddraw.DirectDrawEnumerateExA] } }
+__declspec(naked) void FakeDirectDrawEnumerateExA()			{ _asm { jmp [g_DDraw.DirectDrawEnumerateExA] } }
 // HRESULT WINAPI DirectDrawEnumerateExW( LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags );
-__declspec(naked) void FakeDirectDrawEnumerateExW()			{ _asm { jmp [ddraw.DirectDrawEnumerateExW] } }
+__declspec(naked) void FakeDirectDrawEnumerateExW()			{ _asm { jmp [g_DDraw.DirectDrawEnumerateExW] } }
 // HRESULT WINAPI DirectDrawEnumerateW( LPDDENUMCALLBACKW lpCallback, LPVOID lpContext );
-__declspec(naked) void FakeDirectDrawEnumerateW()			{ _asm { jmp [ddraw.DirectDrawEnumerateW] } }
-__declspec(naked) void FakeDllCanUnloadNow()				{ _asm { jmp [ddraw.DllCanUnloadNow] } }
-__declspec(naked) void FakeDllGetClassObject()				{ _asm { jmp [ddraw.DllGetClassObject] } }
-__declspec(naked) void FakeGetDDSurfaceLocal()				{ _asm { jmp [ddraw.GetDDSurfaceLocal] } }
-__declspec(naked) void FakeGetOLEThunkData()				{ _asm { jmp [ddraw.GetOLEThunkData] } }
-__declspec(naked) void FakeGetSurfaceFromDC()				{ _asm { jmp [ddraw.GetSurfaceFromDC] } }
-__declspec(naked) void FakeRegisterSpecialCase()			{ _asm { jmp [ddraw.RegisterSpecialCase] } }
-__declspec(naked) void FakeReleaseDDThreadLock()			{ _asm { jmp [ddraw.ReleaseDDThreadLock] } }
+__declspec(naked) void FakeDirectDrawEnumerateW()			{ _asm { jmp [g_DDraw.DirectDrawEnumerateW] } }
+__declspec(naked) void FakeDllCanUnloadNow()				{ _asm { jmp [g_DDraw.DllCanUnloadNow] } }
+__declspec(naked) void FakeDllGetClassObject()				{ _asm { jmp [g_DDraw.DllGetClassObject] } }
+__declspec(naked) void FakeGetDDSurfaceLocal()				{ _asm { jmp [g_DDraw.GetDDSurfaceLocal] } }
+__declspec(naked) void FakeGetOLEThunkData()				{ _asm { jmp [g_DDraw.GetOLEThunkData] } }
+__declspec(naked) void FakeGetSurfaceFromDC()				{ _asm { jmp [g_DDraw.GetSurfaceFromDC] } }
+__declspec(naked) void FakeRegisterSpecialCase()			{ _asm { jmp [g_DDraw.RegisterSpecialCase] } }
+__declspec(naked) void FakeReleaseDDThreadLock()			{ _asm { jmp [g_DDraw.ReleaseDDThreadLock] } }
 
 HRESULT __stdcall FakeD3DDevice_Load(LPDIRECT3DDEVICE7 lpDevice, LPDIRECTDRAWSURFACE7 lpDestTex,LPPOINT lpDestPoint,LPDIRECTDRAWSURFACE7 lpSrcTex,LPRECT lprcSrcRect,DWORD dwFlags)
 {
@@ -101,59 +101,84 @@ void ReadConfig(char* szFilename)
 	g_bViewModelFOVFix = GetPrivateProfileInt("Compatibility", "Fix_ViewModelFOV", FALSE, szFilename);
 	g_bSolidDrawingFix = GetPrivateProfileInt("Compatibility", "Fix_SolidDrawing", FALSE, szFilename);
 	g_bLightLoadFix = GetPrivateProfileInt("Compatibility", "Fix_LightLoad", FALSE, szFilename);
+	g_bTWMDetailTexFix = GetPrivateProfileInt("Compatibility", "Fix_TWMDetailTex", FALSE, szFilename);
 	g_bMiscCCFix = GetPrivateProfileInt("Compatibility", "Fix_MiscCC", FALSE, szFilename);
 	g_bRawMouseInputFix = GetPrivateProfileInt("Compatibility", "Fix_RawMouseInput", FALSE, szFilename);
 	g_bRawMouseInputFix2 = g_bRawMouseInputFix;
 
 	g_fRMIScaleGlobal = (float)GetPrivateProfileInt("RawMouseInput", "ScaleGlobal", 1000, szFilename) / 1000000.0f;
 	g_fRMIScaleY = GetPrivateProfileInt("RawMouseInput", "ScaleY", 1100000, szFilename) / 1000000.0f;
+
+	g_bDgVoodooMode = GetPrivateProfileInt("Main", "DgVoodooMode", FALSE, szFilename);
+
+	if (g_bDgVoodooMode)
+	{
+		g_bIntelHDFix = FALSE;
+		g_bRadeon5700Fix = FALSE;
+		//g_bSolidDrawingFix = FALSE;
+		g_bLightLoadFix = FALSE;
+		g_bTWMDetailTexFix = FALSE;
+	}
 }
 
 void ClearMultiLinesHolder();
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-	char path[MAX_PATH];
-	HANDLE hProcess = NULL;
 	switch (ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
 		{
+			char path[MAX_PATH];
+			HANDLE hProcess = NULL;	
+			ReadConfig(".\\ddraw_avp2.ini");
 
-			CopyMemory(path + GetSystemDirectory(path,MAX_PATH-10), "\\ddraw.dll",11);
-			ddraw.dll = LoadLibrary(path);
-			if (ddraw.dll == false)
+			if (g_bDgVoodooMode)
 			{
-				MessageBox(0, "Cannot load original ddraw.dll library", APP_NAME, MB_ICONERROR);
-				ExitProcess(0);
+				g_DDraw.dll = LoadLibrary(".\\vdraw.dll");
+				if (!g_DDraw.dll)
+				{
+					MessageBox(0, "Cannot load dgVoodoo2's vdraw.dll (renamed ddraw.dll) library", APP_NAME, MB_ICONERROR);
+					ExitProcess(0);
+				}
 			}
-			ddraw.AcquireDDThreadLock			= GetProcAddress(ddraw.dll, "AcquireDDThreadLock");
-			ddraw.CheckFullscreen				= GetProcAddress(ddraw.dll, "CheckFullscreen");
-			ddraw.CompleteCreateSysmemSurface	= GetProcAddress(ddraw.dll, "CompleteCreateSysmemSurface");
-			ddraw.D3DParseUnknownCommand		= GetProcAddress(ddraw.dll, "D3DParseUnknownCommand");
-			ddraw.DDGetAttachedSurfaceLcl		= GetProcAddress(ddraw.dll, "DDGetAttachedSurfaceLcl");
-			ddraw.DDInternalLock				= GetProcAddress(ddraw.dll, "DDInternalLock");
-			ddraw.DDInternalUnlock				= GetProcAddress(ddraw.dll, "DDInternalUnlock");
-			ddraw.DSoundHelp					= GetProcAddress(ddraw.dll, "DSoundHelp");
-			ddraw.DirectDrawCreate				= GetProcAddress(ddraw.dll, "DirectDrawCreate");
-			ddraw.DirectDrawCreateClipper		= GetProcAddress(ddraw.dll, "DirectDrawCreateClipper");
-			ddraw.DirectDrawCreateEx			= GetProcAddress(ddraw.dll, "DirectDrawCreateEx");
-			ddraw.DirectDrawEnumerateA			= GetProcAddress(ddraw.dll, "DirectDrawEnumerateA");
-			ddraw.DirectDrawEnumerateExA		= GetProcAddress(ddraw.dll, "DirectDrawEnumerateExA");
-			ddraw.DirectDrawEnumerateExW		= GetProcAddress(ddraw.dll, "DirectDrawEnumerateExW");
-			ddraw.DirectDrawEnumerateW			= GetProcAddress(ddraw.dll, "DirectDrawEnumerateW");
-			ddraw.DllCanUnloadNow				= GetProcAddress(ddraw.dll, "DllCanUnloadNow");
-			ddraw.DllGetClassObject				= GetProcAddress(ddraw.dll, "DllGetClassObject");
-			ddraw.GetDDSurfaceLocal				= GetProcAddress(ddraw.dll, "GetDDSurfaceLocal");
-			ddraw.GetOLEThunkData				= GetProcAddress(ddraw.dll, "GetOLEThunkData");
-			ddraw.GetSurfaceFromDC				= GetProcAddress(ddraw.dll, "GetSurfaceFromDC");
-			ddraw.RegisterSpecialCase			= GetProcAddress(ddraw.dll, "RegisterSpecialCase");
-			ddraw.ReleaseDDThreadLock			= GetProcAddress(ddraw.dll, "ReleaseDDThreadLock");
+			else
+			{
+				CopyMemory(path + GetSystemDirectory(path,MAX_PATH-10), "\\ddraw.dll",11);
+				g_DDraw.dll = LoadLibrary(path);
+				if (!g_DDraw.dll)
+				{
+					MessageBox(0, "Cannot load original ddraw.dll library", APP_NAME, MB_ICONERROR);
+					ExitProcess(0);
+				}
+			}
+			
+			g_DDraw.AcquireDDThreadLock			= GetProcAddress(g_DDraw.dll, "AcquireDDThreadLock");
+			g_DDraw.CheckFullscreen				= GetProcAddress(g_DDraw.dll, "CheckFullscreen");
+			g_DDraw.CompleteCreateSysmemSurface	= GetProcAddress(g_DDraw.dll, "CompleteCreateSysmemSurface");
+			g_DDraw.D3DParseUnknownCommand		= GetProcAddress(g_DDraw.dll, "D3DParseUnknownCommand");
+			g_DDraw.DDGetAttachedSurfaceLcl		= GetProcAddress(g_DDraw.dll, "DDGetAttachedSurfaceLcl");
+			g_DDraw.DDInternalLock				= GetProcAddress(g_DDraw.dll, "DDInternalLock");
+			g_DDraw.DDInternalUnlock			= GetProcAddress(g_DDraw.dll, "DDInternalUnlock");
+			g_DDraw.DSoundHelp					= GetProcAddress(g_DDraw.dll, "DSoundHelp");
+			g_DDraw.DirectDrawCreate			= GetProcAddress(g_DDraw.dll, "DirectDrawCreate");
+			g_DDraw.DirectDrawCreateClipper		= GetProcAddress(g_DDraw.dll, "DirectDrawCreateClipper");
+			g_DDraw.DirectDrawCreateEx			= GetProcAddress(g_DDraw.dll, "DirectDrawCreateEx");
+			g_DDraw.DirectDrawEnumerateA		= GetProcAddress(g_DDraw.dll, "DirectDrawEnumerateA");
+			g_DDraw.DirectDrawEnumerateExA		= GetProcAddress(g_DDraw.dll, "DirectDrawEnumerateExA");
+			g_DDraw.DirectDrawEnumerateExW		= GetProcAddress(g_DDraw.dll, "DirectDrawEnumerateExW");
+			g_DDraw.DirectDrawEnumerateW		= GetProcAddress(g_DDraw.dll, "DirectDrawEnumerateW");
+			g_DDraw.DllCanUnloadNow				= GetProcAddress(g_DDraw.dll, "DllCanUnloadNow");
+			g_DDraw.DllGetClassObject			= GetProcAddress(g_DDraw.dll, "DllGetClassObject");
+			g_DDraw.GetDDSurfaceLocal			= GetProcAddress(g_DDraw.dll, "GetDDSurfaceLocal");
+			g_DDraw.GetOLEThunkData				= GetProcAddress(g_DDraw.dll, "GetOLEThunkData");
+			g_DDraw.GetSurfaceFromDC			= GetProcAddress(g_DDraw.dll, "GetSurfaceFromDC");
+			g_DDraw.RegisterSpecialCase			= GetProcAddress(g_DDraw.dll, "RegisterSpecialCase");
+			g_DDraw.ReleaseDDThreadLock			= GetProcAddress(g_DDraw.dll, "ReleaseDDThreadLock");
 
 			g_LogFile = fopen("ddraw_avp2.log", "w");
-			logf(0, LINFO, "Original ddraw.dll address = %08X", ddraw.dll);
+			logf(0, LINFO, "Original ddraw.dll address = %08X", g_DDraw.dll);
 
-			ReadConfig(".\\ddraw_avp2.ini");
 			if (!g_bNoCompatWarning)
 			{
 				char szTitle[64];
@@ -163,6 +188,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				"D3D7FIX wrapper is installed and it is not compatible with MSP v2.0+ and PaybackTime v0.2+! If you are starting one of these mods, please remove ddraw.dll from game directory.", 
 				szTitle,
 				MB_ICONWARNING);
+			}
+
+			if (g_bDgVoodooMode)
+			{
+				logf(0, LINFO, "dgVoodoo mode enabled");
 			}
 				
 			logf(0, LINFO, "Framelimiter = %d FPS", (int)g_fMaxFPS);
@@ -175,7 +205,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			ClearMultiLinesHolder();
 			FontList_Clear(FALSE);
 			fclose( g_LogFile );
-			FreeLibrary(ddraw.dll);
+			FreeLibrary(g_DDraw.dll);
 		break;
 	}
 	return TRUE;
@@ -750,6 +780,28 @@ void ApplyLightLoad_Fix()
 	EngineHack_WriteCall(hProcess, (LPVOID)(DWORD(dwDllAddress) + 0x34CF2), (DWORD)FakeD3DDevice_Load, TRUE);
 }
 
+BOOL* g_pDetailTextureCapable;
+typedef void (*sub_3F0A2A7_type)();
+void (*sub_3F0A2A7)();
+void My_sub_3F0A2A7()
+{
+	*g_pDetailTextureCapable = FALSE;
+	sub_3F0A2A7();
+	*g_pDetailTextureCapable = TRUE;
+}
+
+void ApplyTWMDetailTex_Fix()
+{
+	logf(0, LINFO, "Applying TWM detail textures fix");
+
+	HANDLE hProcess = GetCurrentProcess();
+	DWORD dwDllAddress = (DWORD)GetModuleHandle("d3d.ren");
+
+	g_pDetailTextureCapable = (BOOL*)(dwDllAddress + 0x5DE2C);
+	sub_3F0A2A7 = (sub_3F0A2A7_type)(dwDllAddress + 0xA2A7);
+	EngineHack_WriteCall(hProcess, (LPVOID)(dwDllAddress + 0x9C5A), (DWORD)My_sub_3F0A2A7, FALSE);
+}
+
 HRESULT WINAPI FakeDirectDrawCreateEx(GUID FAR * lpGUID, LPVOID *lplpDD, REFIID iid, IUnknown FAR *pUnkOuter)
 {
 	HookEngineStuff();
@@ -778,7 +830,11 @@ HRESULT WINAPI FakeDirectDrawCreateEx(GUID FAR * lpGUID, LPVOID *lplpDD, REFIID 
 	if (g_bLightLoadFix)
 		ApplyLightLoad_Fix();
 
-	DirectDrawCreateEx_Type DirectDrawCreateEx_fn = (DirectDrawCreateEx_Type) ddraw.DirectDrawCreateEx;
+	if (g_bTWMDetailTexFix)
+		ApplyTWMDetailTex_Fix();
+
+	DirectDrawCreateEx_Type DirectDrawCreateEx_fn = (DirectDrawCreateEx_Type) g_DDraw.DirectDrawCreateEx;
+
 	LPVOID FAR dummy;
 	
 	HRESULT hResult = DirectDrawCreateEx_fn(lpGUID, &dummy, iid, pUnkOuter);

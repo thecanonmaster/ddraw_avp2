@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "numfont.h"
 
+BOOL g_bDgVoodooMode = FALSE;
 BOOL g_bNoCompatWarning = FALSE;
 BOOL g_bDontShutdownRenderer = FALSE;
 BOOL g_bShowFPS = FALSE;
@@ -18,6 +19,7 @@ BOOL g_bSolidDrawingFix = FALSE;
 BOOL g_bIntelHDFix = FALSE;
 BOOL g_bRadeon5700Fix = FALSE;
 BOOL g_bLightLoadFix = FALSE;
+BOOL g_bTWMDetailTexFix = FALSE;
 BOOL g_bMiscCCFix = FALSE;
 BOOL g_bRawMouseInputFix = FALSE;
 BOOL g_bRawMouseInputFix2 = FALSE;

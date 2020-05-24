@@ -1,5 +1,6 @@
 #include <vector>
 
+extern BOOL g_bDgVoodooMode;
 extern BOOL g_bNoCompatWarning;
 extern BOOL g_bDontShutdownRenderer;
 extern BOOL g_bShowFPS;
@@ -18,6 +19,7 @@ extern BOOL g_bIntelHDFix;
 extern BOOL g_bRadeon5700Fix;
 extern BOOL g_bMiscCCFix;
 extern BOOL g_bLightLoadFix;
+extern BOOL g_bTWMDetailTexFix;
 extern BOOL g_bRawMouseInputFix;
 extern BOOL g_bRawMouseInputFix2;
 extern LPDIRECTDRAWSURFACE7 g_ddsBackBuffer;
@@ -36,7 +38,7 @@ extern LONG g_lRMILastY;
 extern int g_nLastFrameRate;
 
 #define APP_NAME		"D3D7FIX v%.2f for Aliens vs Predator 2"
-#define APP_VERSION		0.13f
+#define APP_VERSION		0.14f
 
 #define FONT_LIST_UPDATE_TIME		5.0f
 #define FONT_LIST_CLEANUP_TIME		180.0f

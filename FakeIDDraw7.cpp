@@ -1,6 +1,74 @@
 #include "stdafx.h"
 
 
+typedef HRESULT (__stdcall *Blt_Type) (LPDIRECTDRAWSURFACE7, LPRECT, LPDIRECTDRAWSURFACE7, LPRECT, DWORD, LPDDBLTFX);
+typedef HRESULT (__stdcall *BltFast_Type) (LPDIRECTDRAWSURFACE7, DWORD, DWORD, LPDIRECTDRAWSURFACE7, LPRECT, DWORD);
+Blt_Type g_dwOriginalBlt = NULL;
+BltFast_Type g_dwOriginalBltFast = NULL;
+
+DWORD g_dwDDSLightMapVtable7[49]; 
+
+HRESULT __stdcall FakeIDDrawSurface7LM_Blt(LPDIRECTDRAWSURFACE7 f, LPRECT a,LPDIRECTDRAWSURFACE7 b, LPRECT c,DWORD d, LPDDBLTFX e)
+{			
+	if (!b) 
+	{		
+		DDSURFACEDESC2 descDest;
+		descDest.dwSize = sizeof(DDSURFACEDESC2);
+		
+		//if (g_dwOriginalLock(f, NULL, &descDest, DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL) == DD_OK)
+		if (f->Lock(NULL, &descDest, DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL) == DD_OK)
+		{				
+			memset(descDest.lpSurface, e->dwFillColor, (descDest.dwWidth * descDest.dwHeight) << 2);	
+			//g_dwOriginalUnlock(f, NULL);
+			f->Unlock(NULL);
+		}
+		
+		return DD_OK; 
+	}
+	
+	return g_dwOriginalBlt(f, a, b, c, d, e);	
+}
+
+HRESULT __stdcall FakeIDDrawSurface7LM_BltFast(LPDIRECTDRAWSURFACE7 f,DWORD a,DWORD b,LPDIRECTDRAWSURFACE7 c, LPRECT d,DWORD e)
+{		
+	DDSURFACEDESC2 descSrc, descDest;
+	descSrc.dwSize = sizeof(DDSURFACEDESC2);
+	descDest.dwSize = sizeof(DDSURFACEDESC2);
+		
+	//if (g_dwOriginalLock(c, d, &descSrc, DDLOCK_WAIT | DDLOCK_READONLY, NULL) == DD_OK)
+	if (c->Lock(d, &descSrc, DDLOCK_WAIT | DDLOCK_READONLY, NULL) == DD_OK)
+	{
+		//if (g_dwOriginalLock(f, NULL, &descDest, DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL) == DD_OK)
+		if (f->Lock(NULL, &descDest, DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL) == DD_OK)
+		{
+			DWORD srcWidth = d->right - d->left;
+			DWORD srcHeight = d->bottom - d->top;
+			BYTE* pSrcLine = (BYTE*)descSrc.lpSurface;
+				
+			BYTE* pDestLine = (BYTE*)descDest.lpSurface + (b * (descDest.dwWidth << 2) + (a << 2));
+				
+			int nCount = srcHeight;
+				
+			while (nCount) 
+			{
+				nCount--;
+				memcpy(pDestLine, pSrcLine, srcWidth << 2);
+					
+				pSrcLine += descSrc.lPitch;
+				pDestLine += descDest.lPitch; 
+			}			
+				
+			//g_dwOriginalUnlock(c, NULL);
+			//g_dwOriginalUnlock(f, NULL);
+			c->Unlock(NULL);
+			f->Unlock(NULL);
+		}
+	}
+		
+	return DD_OK;
+}
+
+
 typedef LRESULT CALLBACK WindowProc_type(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 typedef WindowProc_type *WindowProc_type_ptr;
 WindowProc_type_ptr OldWindowProc;
@@ -131,6 +199,34 @@ HRESULT  __stdcall FakeIDDraw7::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIREC
 
 HRESULT  __stdcall FakeIDDraw7::CreateSurface(LPDDSURFACEDESC2 lpDDSurfaceDesc2, LPDIRECTDRAWSURFACE7 FAR * lplpDDSurface, IUnknown FAR * pUnkOuter)
 {		
+	if (g_bDgVoodooMode && lpDDSurfaceDesc2->dwMipMapCount == 0 && lpDDSurfaceDesc2->ddpfPixelFormat.dwRGBBitCount == 32 
+		&& !(lpDDSurfaceDesc2->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+	{
+		HRESULT hResult = m_pIDDraw->CreateSurface(lpDDSurfaceDesc2, lplpDDSurface, pUnkOuter);
+		if (hResult == DD_OK)
+		{
+			DWORD* dwOriginalVtable = (DWORD*)*lplpDDSurface;
+			memcpy(g_dwDDSLightMapVtable7, (void*)*dwOriginalVtable, 49 * sizeof(DWORD));
+
+			if (!g_dwOriginalBlt)
+			{
+				g_dwOriginalBlt = (Blt_Type)g_dwDDSLightMapVtable7[5];
+				g_dwOriginalBltFast = (BltFast_Type)g_dwDDSLightMapVtable7[7];
+				//g_dwOriginalLock = (Lock_Type)g_dwDDSLightMapVtable7[25];
+				//g_dwOriginalUnlock = (Unlock_Type)g_dwDDSLightMapVtable7[32];
+			}
+			
+			g_dwDDSLightMapVtable7[5] = (DWORD)FakeIDDrawSurface7LM_Blt;
+			g_dwDDSLightMapVtable7[7] = (DWORD)FakeIDDrawSurface7LM_BltFast;
+			//g_dwDDSLightMapVtable7[25] = (DWORD)FakeIDDrawSurface7LM_Lock;
+			//g_dwDDSLightMapVtable7[32] = (DWORD)FakeIDDrawSurface7LM_Unlock;
+			dwOriginalVtable[0] = (DWORD)g_dwDDSLightMapVtable7;
+		}
+
+		return hResult;
+	}
+	
+	
 	HRESULT hResult = m_pIDDraw->CreateSurface(lpDDSurfaceDesc2, lplpDDSurface, pUnkOuter);
 
 	if((lpDDSurfaceDesc2->dwFlags & DDSD_CAPS) && (lpDDSurfaceDesc2->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))  
