@@ -113,7 +113,6 @@ HRESULT FakeIDDrawSurface7::Blt(LPRECT a,LPDIRECTDRAWSURFACE7 b, LPRECT c,DWORD 
 		FrameLimiter();
 	}*/
 
-	//FrameUpdate();
 	FrameLimiter();
 
 	return(m_pIDDrawSurface->Blt(a, b, c, d, e));	
@@ -152,6 +151,8 @@ HRESULT FakeIDDrawSurface7::EnumOverlayZOrders(DWORD a,LPVOID b,LPDDENUMSURFACES
 
 HRESULT FakeIDDrawSurface7::Flip(LPDIRECTDRAWSURFACE7 a, DWORD b)
 {	
+	FrameLimiter();
+	
 	HRESULT hResult = m_pIDDrawSurface->Flip(a, b);
 	return hResult;	
 }

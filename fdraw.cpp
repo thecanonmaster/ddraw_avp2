@@ -88,7 +88,6 @@ HRESULT __stdcall FakeD3DDevice_Load(LPDIRECT3DDEVICE7 lpDevice, LPDIRECTDRAWSUR
 
 void ReadConfig(char* szFilename)
 {
-	g_bNoCompatWarning = GetPrivateProfileInt("Misc", "NoCompatWarning", FALSE, szFilename);
 	g_bDontShutdownRenderer = GetPrivateProfileInt("Misc", "DontShutdownRenderer", FALSE, szFilename);
 	g_bShowFPS = GetPrivateProfileInt("Misc", "ShowFPS", FALSE, szFilename);
 	g_nFrameLimiterSleep = GetPrivateProfileInt("Misc", "FrameLimiterSleep", FALSE, szFilename);
@@ -102,6 +101,8 @@ void ReadConfig(char* szFilename)
 	g_bSolidDrawingFix = GetPrivateProfileInt("Compatibility", "Fix_SolidDrawing", FALSE, szFilename);
 	g_bLightLoadFix = GetPrivateProfileInt("Compatibility", "Fix_LightLoad", FALSE, szFilename);
 	g_bTWMDetailTexFix = GetPrivateProfileInt("Compatibility", "Fix_TWMDetailTex", FALSE, szFilename);
+	g_bTimeCalibrationFix = GetPrivateProfileInt("Compatibility", "Fix_TimeCalibration", FALSE, szFilename);
+	g_bFlipScreenFix = GetPrivateProfileInt("Compatibility", "Fix_FlipScreen", FALSE, szFilename);
 	g_bMiscCCFix = GetPrivateProfileInt("Compatibility", "Fix_MiscCC", FALSE, szFilename);
 	g_bRawMouseInputFix = GetPrivateProfileInt("Compatibility", "Fix_RawMouseInput", FALSE, szFilename);
 	g_bRawMouseInputFix2 = g_bRawMouseInputFix;
@@ -178,17 +179,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			g_LogFile = fopen("ddraw_avp2.log", "w");
 			logf(0, LINFO, "Original ddraw.dll address = %08X", g_DDraw.dll);
-
-			if (!g_bNoCompatWarning)
-			{
-				char szTitle[64];
-				sprintf(szTitle, APP_NAME, APP_VERSION);
-
-				MessageBox(NULL, 
-				"D3D7FIX wrapper is installed and it is not compatible with MSP v2.0+ and PaybackTime v0.2+! If you are starting one of these mods, please remove ddraw.dll from game directory.", 
-				szTitle,
-				MB_ICONWARNING);
-			}
 
 			if (g_bDgVoodooMode)
 			{
@@ -583,22 +573,22 @@ void CreateFrameRateFontSurface()
 	}
 }*/
 
-/*void DrawIntroduction()
+void DrawIntroduction()
 {
-	float fTime = ILTCSBase_GetTime(g_pLTClient);
-
-	if (!g_hIntroductionSurface)
+	if (!g_hIntroductionSurface[0])
 		CreateIntroductionSurface();
 
 	DWORD hScreen = g_pLTClient->GetScreenSurface();
-}*/
+
+	for (int i = 0; i < 5; i++)
+		g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, g_hIntroductionSurface[i], NULL, 5, 5 + (i * INTRODUCTION_FONT_HEIGHT + 2), 0);
+}
 
 void DrawFrameRate()
 {
 	/*DWORD dwDllAddress = (DWORD)GetModuleHandle("d3d.ren");
 	bool & g_bInOptimized2D = *(bool*)(dwDllAddress + 0x5DE44);
-	bool & g_bIn3D = *(bool*)(dwDllAddress + 0x5DE40);*/
-	
+	bool & g_bIn3D = *(bool*)(dwDllAddress + 0x5DE40);*/	
 	
 	if (!g_hFrameRateFontSurface[0])
 		CreateFrameRateFontSurfaces();
@@ -620,6 +610,7 @@ void DrawFrameRate()
 		hFontColor = 0x00FFFF00;
 
 	g_pLTClient->SetOptimized2DColor(hFontColor);
+
 	for (int k = 0; k < nLength ; k++)
 	{
 		//g_pLTClient->DrawSurfaceToSurface(hScreen, g_hFrameRateFontSurface[szBuffer[k] - 0x30], NULL, nStartX + (k * (FRAME_RATE_FONT_HEIGHT + 1)), nStartY);	
@@ -628,7 +619,7 @@ void DrawFrameRate()
 		rcDest.right = rcDest.left + (FRAME_RATE_FONT_WIDTH * FRAME_RATE_FONT_SCALE);
 		g_pLTClient->ScaleSurfaceToSurfaceTransparent(hScreen, g_hFrameRateFontSurface[szBuffer[k] - 0x30], &rcDest, NULL, 0);
 	}
-	g_pLTClient->SetOptimized2DColor(0xFFFFFFFF);
+	g_pLTClient->SetOptimized2DColor(0x00FFFFFF);
 }
 
 DWORD g_hViewModelBaseFOVX = 0;
@@ -712,6 +703,11 @@ void __fastcall MyIClientShell_Update(void* pShell)
 DWORD (*OldEndOptimized2D)();
 DWORD MyEndOptimized2D()
 {
+	float fTime = ILTCSBase_GetTime(g_pLTClient);
+
+	if (fTime - g_fIntroductionStartTime < INTRODUCTION_TIME)
+		DrawIntroduction();
+	
 	if (g_bShowFPS && g_bDrawFPS)
 		DrawFrameRate();
 	
@@ -725,7 +721,8 @@ void HookEngineStuff()
 	DWORD dwRead;
 	HANDLE hProcess = GetCurrentProcess();
 	DWORD dwExeAddress = (DWORD)GetModuleHandle("lithtech.exe");
-	g_pClientMgr = (CClientMgrBase*)(dwExeAddress + 0x0DEFAC);
+	g_pClientMgr = (CClientMgrBase*)(dwExeAddress + 0xDEFAC);
+	g_pServerMgr = (CServerMgrBase*)(dwExeAddress + 0xE5DC8);
 	g_pLTClient = g_pClientMgr->m_pClientMgr->m_pLTClient;
 
 	DWORD* pOrigTable = (DWORD*)*(DWORD*)g_pLTClient;
@@ -762,6 +759,7 @@ void HookEngineStuff()
 	{
 		//g_pLTClient->RunConsoleString("UpdateRateInitted 1");
 		//g_pLTClient->RunConsoleString("UpdateRate 60");	
+		g_pLTClient->RunConsoleString("LockOnFlip 0");
 		g_pLTClient->RunConsoleString("MaxModelShadows 0");
 		g_pLTClient->RunConsoleString("MaxModelLights 10");
 		g_pLTClient->RunConsoleString("NearZ 4");
@@ -802,6 +800,100 @@ void ApplyTWMDetailTex_Fix()
 	EngineHack_WriteCall(hProcess, (LPVOID)(dwDllAddress + 0x9C5A), (DWORD)My_sub_3F0A2A7, FALSE);
 }
 
+float g_fServerFrameTimeClamp = 0.0f;
+typedef void (*dsi_ClientSleep_type)(DWORD dwMilliseconds);
+void (__cdecl *dsi_ClientSleep)(DWORD dwMilliseconds);
+typedef void (__fastcall *UpdateSounds_type)(CServerMgr* pServerMgr, float fDeltaTime);
+void (__fastcall *UpdateSounds)(CServerMgr* pServerMgr, float fDeltaTime);
+typedef void (*pd_Update_type)(CClientShell *pShell);
+void (*pd_Update)(CClientShell *pShell);
+
+__forceinline int Round(float v)
+{
+    int r;
+    __asm
+    {
+        FLD     v
+		FISTP   r
+		FWAIT
+    };
+	
+    return r;
+}
+
+void GameTimeCalibration_Client()
+{
+	g_pClientMgr->m_pClientMgr->m_pCurShell->m_GameFrameTime = (float)Round(g_pClientMgr->m_pClientMgr->m_pCurShell->m_GameFrameTime * 1000.0f) / 1000.0f;
+}
+
+void TimeCalibration_Client()
+{
+	g_pClientMgr->m_pClientMgr->m_FrameTime = (float)Round(g_pClientMgr->m_pClientMgr->m_FrameTime * 1000.0f) / 1000.0f;
+}
+
+void TimeCalibration_Server()
+{
+	g_pServerMgr->m_pServerMgr->m_TrueFrameTime  = (float)Round(g_pServerMgr->m_pServerMgr->m_TrueFrameTime * 1000.0f) / 1000.0f;
+	g_pServerMgr->m_pServerMgr->m_FrameTime = (float)Round(g_pServerMgr->m_pServerMgr->m_FrameTime * 1000.0f) / 1000.0f; //g_pServerMgr->m_pServerMgr->m_TrueFrameTime;
+}
+
+void My_pd_Update(CClientShell *pShell)
+{
+	GameTimeCalibration_Client();
+	pd_Update(pShell);
+}
+
+void __fastcall MyUpdateSounds(CServerMgr* pServerMgr, float fDeltaTime)
+{
+	TimeCalibration_Server();
+	UpdateSounds(pServerMgr, fDeltaTime);
+}
+
+void My_dsi_ClientSleep(DWORD dwMilliseconds)
+{
+	TimeCalibration_Client();
+	dsi_ClientSleep(dwMilliseconds);
+}
+
+void ApplyTimeCalibration_Fix()
+{
+	logf(0, LINFO, "Applying time calibration fix");
+
+	HANDLE hProcess = GetCurrentProcess();
+	DWORD dwExeAddress = (DWORD)GetModuleHandle("lithtech.exe");
+
+	dsi_ClientSleep = (dsi_ClientSleep_type)(dwExeAddress + 0x35070);
+	EngineHack_WriteCall(hProcess, (LPVOID)(dwExeAddress + 0x10E06), (DWORD)My_dsi_ClientSleep, FALSE);
+
+	pd_Update = (pd_Update_type)(DWORD(dwExeAddress) + 0x6E250);
+	EngineHack_WriteCall(hProcess, (LPVOID)(dwExeAddress + 0x15374), (DWORD)My_pd_Update, FALSE);
+
+	DWORD dwNew = (DWORD)(&g_fServerFrameTimeClamp);
+	BYTE anOld[4];
+	EngineHack_WriteData(hProcess, (LPVOID)(dwExeAddress + 0x83688), (BYTE*)(&dwNew), anOld, 4);
+	EngineHack_WriteData(hProcess, (LPVOID)(dwExeAddress + 0x8369D), (BYTE*)(&dwNew), anOld, 4);
+
+	UpdateSounds = (UpdateSounds_type)(dwExeAddress + 0x83370);
+	EngineHack_WriteCall(hProcess, (LPVOID)(dwExeAddress + 0x836D7), (DWORD)MyUpdateSounds, FALSE);
+}
+
+DWORD (*OldFlipScreen)(DWORD flags);
+DWORD MyFlipScreen(DWORD flags)
+{
+	return OldFlipScreen(FLIPSCREEN_DIRTY);
+}		
+
+void ApplyFlipScreen_Fix()
+{
+	logf(0, LINFO, "Applying time calibration fix");
+	
+	if (g_pLTClient->FlipScreen != MyFlipScreen)
+	{
+		OldFlipScreen = g_pLTClient->FlipScreen;
+		g_pLTClient->FlipScreen = MyFlipScreen;
+	}
+}
+
 HRESULT WINAPI FakeDirectDrawCreateEx(GUID FAR * lpGUID, LPVOID *lplpDD, REFIID iid, IUnknown FAR *pUnkOuter)
 {
 	HookEngineStuff();
@@ -832,6 +924,12 @@ HRESULT WINAPI FakeDirectDrawCreateEx(GUID FAR * lpGUID, LPVOID *lplpDD, REFIID 
 
 	if (g_bTWMDetailTexFix)
 		ApplyTWMDetailTex_Fix();
+
+	if (g_bTimeCalibrationFix)
+		ApplyTimeCalibration_Fix();
+
+	if (g_bFlipScreenFix)
+		ApplyFlipScreen_Fix();
 
 	DirectDrawCreateEx_Type DirectDrawCreateEx_fn = (DirectDrawCreateEx_Type) g_DDraw.DirectDrawCreateEx;
 

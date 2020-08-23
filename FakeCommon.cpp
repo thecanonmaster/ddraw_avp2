@@ -20,6 +20,8 @@ BOOL g_bIntelHDFix = FALSE;
 BOOL g_bRadeon5700Fix = FALSE;
 BOOL g_bLightLoadFix = FALSE;
 BOOL g_bTWMDetailTexFix = FALSE;
+BOOL g_bTimeCalibrationFix = FALSE;
+BOOL g_bFlipScreenFix = FALSE;
 BOOL g_bMiscCCFix = FALSE;
 BOOL g_bRawMouseInputFix = FALSE;
 BOOL g_bRawMouseInputFix2 = FALSE;
@@ -29,6 +31,7 @@ LPDIRECTDRAW7 g_ddMainDDraw = NULL;
 HWND g_hWindowHandle = NULL;
 BOOL g_bWindowHooked = FALSE;
 CClientMgrBase* g_pClientMgr = NULL;
+CServerMgrBase* g_pServerMgr = NULL;
 ILTClient* g_pLTClient = NULL;
 float g_fLastFontListUpdate = 0.0f;
 
@@ -40,7 +43,8 @@ LONG g_lRMILastY = 0;
 
 FontList g_FontList;
 DWORD g_hWhitePixelSurface = NULL;
-//DWORD g_hIntroductionSurface = NULL;
+float g_fIntroductionStartTime = 0.0f;
+DWORD g_hIntroductionSurface[5] = { NULL, NULL, NULL, NULL, NULL };
 DWORD g_hFrameRateFontSurface[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 int g_nLastFrameRate = 0;
 //SolidSurfaceList g_SolidSurfaceList;
@@ -208,14 +212,17 @@ void FontList_Clear(BOOL bDeleteSurfaces)
 			g_pLTClient->DeleteSurface(g_hWhitePixelSurface);
 			g_hWhitePixelSurface = NULL;
 		}
-
-		/*if (g_hIntroductionSurface)
-		{
-			g_pLTClient->DeleteSurface(g_hIntroductionSurface);
-			g_hIntroductionSurface = NULL;
-		}*/
 		
-		for (int i = 0; i < 10 ; i++)
+		for (int i = 0; i < 5 ; i++)
+		{
+			if (g_hIntroductionSurface[i])
+			{
+				g_pLTClient->DeleteSurface(g_hIntroductionSurface[i]);
+				g_hIntroductionSurface[i] = NULL;
+			}
+		}
+		
+		for (i = 0; i < 10 ; i++)
 		{
 			if (g_hFrameRateFontSurface[i])
 			{
@@ -301,6 +308,19 @@ void ProcessRawMouseInput(LPARAM lParam, LONG& lLastX, LONG& lLastY)
 	} 
 }
 
+void EngineHack_WriteData(HANDLE hProcess, LPVOID lpAddr, BYTE* pNew, BYTE* pOld, DWORD dwSize)
+{
+	DWORD dwOldProtect, dwTemp;
+	void* pContent = (DWORD*)lpAddr;
+	
+	VirtualProtectEx(hProcess, lpAddr, dwSize, PAGE_EXECUTE_READWRITE, &dwOldProtect);
+	
+	memcpy(pOld, pContent, dwSize);
+	memcpy(pContent, pNew, dwSize);
+	
+	VirtualProtectEx(hProcess, lpAddr, dwSize, dwOldProtect, &dwTemp);
+}
+
 void EngineHack_WriteFunction(HANDLE hProcess, LPVOID lpAddr, DWORD dwNew, DWORD& dwOld)
 {
 	DWORD dwOldProtect, dwTemp;
@@ -357,16 +377,26 @@ void CreateFrameRateFontSurfaces()
 	}	
 }
 
-/*void CreateIntroductionSurface()
+void CreateIntroductionSurface()
 {
 	char szTitle[64];
-	char szIntro[128];
+	char* szIntro[5];
 	sprintf(szTitle, APP_NAME, APP_VERSION);
-	sprintf(szIntro, "%s\nPage Up - borderless window toggle\nPage Down - draw FPS counter toggle", szTitle);
+	szIntro[0] = szTitle;
+	szIntro[1] = "This wrapper is is not compatible with MSP v2.0+ and PaybackTime v0.2+";
+	szIntro[2] = "If you are starting one of these mods, please remove ddraw.dll from game directory";
+	szIntro[3] = "Page Up - borderless window toggle";
+	szIntro[4] = "Page Down - draw FPS counter toggle";
+	DWORD dwColorMap[5] = { 0x0000FF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFFFF, 0x00FFFFFF };
 
 	DWORD hFont = g_pLTClient->CreateFont("Terminal", INTRODUCTION_FONT_WIDTH, INTRODUCTION_FONT_HEIGHT, FALSE, FALSE, FALSE);
-	DWORD hString = ILTCSBase_CreateString(szIntro);
-	g_hIntroductionSurface = g_pLTClient->CreateSurfaceFromString(hFont, hString, 0x0000FF00, 0, 0, 0);
-	ILTCSBase_FreeString(hString);
+	
+	for (int i = 0; i < 5; i++)
+	{
+		DWORD hString = ILTCSBase_CreateString(szIntro[i]);
+		g_hIntroductionSurface[i] = g_pLTClient->CreateSurfaceFromString(hFont, hString, dwColorMap[i], 0, 0, 0);
+		ILTCSBase_FreeString(hString);
+	}
+
 	g_pLTClient->DeleteFont(hFont);
-}*/
+}

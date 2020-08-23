@@ -1,7 +1,6 @@
 #include <vector>
 
 extern BOOL g_bDgVoodooMode;
-extern BOOL g_bNoCompatWarning;
 extern BOOL g_bDontShutdownRenderer;
 extern BOOL g_bShowFPS;
 extern BOOL g_bDrawFPS;
@@ -20,6 +19,8 @@ extern BOOL g_bRadeon5700Fix;
 extern BOOL g_bMiscCCFix;
 extern BOOL g_bLightLoadFix;
 extern BOOL g_bTWMDetailTexFix;
+extern BOOL g_bTimeCalibrationFix;
+extern BOOL g_bFlipScreenFix;
 extern BOOL g_bRawMouseInputFix;
 extern BOOL g_bRawMouseInputFix2;
 extern LPDIRECTDRAWSURFACE7 g_ddsBackBuffer;
@@ -38,7 +39,7 @@ extern LONG g_lRMILastY;
 extern int g_nLastFrameRate;
 
 #define APP_NAME		"D3D7FIX v%.2f for Aliens vs Predator 2"
-#define APP_VERSION		0.14f
+#define APP_VERSION		0.16f
 
 #define FONT_LIST_UPDATE_TIME		5.0f
 #define FONT_LIST_CLEANUP_TIME		180.0f
@@ -46,9 +47,9 @@ extern int g_nLastFrameRate;
 #define FONT_STRING_LENGTH			1024
 #define FONT_STRING_LINE_RESERVE	4
 
-//#define INTRODUCTION_FONT_HEIGHT	18
-//#define INTRODUCTION_FONT_WIDTH		10
-//#define INTRODUCTION_TIME			10.0f
+#define INTRODUCTION_FONT_HEIGHT	18
+#define INTRODUCTION_FONT_WIDTH		10
+#define INTRODUCTION_TIME			30.0f
 
 #define FRAME_RATE_FONT_HEIGHT	5
 #define FRAME_RATE_FONT_WIDTH	3
@@ -56,6 +57,11 @@ extern int g_nLastFrameRate;
 #define FRAME_RATE_UPDATE_TIME	0.2f
 #define FRAME_RATE_LEVEL_RED	30
 #define FRAME_RATE_LEVEL_YELLOW	55
+
+
+#define FLIPSCREEN_CANDRAWCONSOLE	(1<<0)
+#define FLIPSCREEN_COPY				(1<<1)
+#define FLIPSCREEN_DIRTY			(1<<2)
 
 /*struct SolidSurface
 {
@@ -129,7 +135,8 @@ typedef std::list<Font*> FontList;
 
 extern FontList g_FontList;
 extern DWORD g_hWhitePixelSurface;
-//extern DWORD g_hIntroductionSurface;
+extern float g_fIntroductionStartTime;
+extern DWORD g_hIntroductionSurface[5];
 extern DWORD g_hFrameRateFontSurface[10];
 //extern SolidSurfaceList g_SolidSurfaceList;
 
@@ -252,7 +259,6 @@ extern float (__fastcall *ILTCSBase_GetFrameTime)(ILTCSBase* pBase);
 extern void (__fastcall *IClientShell_Update)(void* pShell);
 
 
-
 class ILTClient: public ILTCSBase
 {
 public:
@@ -260,7 +266,8 @@ public:
 	BYTE			m_Data0[52];
 	void			(*Shutdown)();
 	void			(*ShutdownWithMessage)( char *pMsg, ... );
-	BYTE			m_Data1[18]; // 34
+	DWORD			(*FlipScreen)(DWORD flags);	
+	BYTE			m_Data1[14]; // 18 34
 	DWORD			(*StartOptimized2D)();
 	DWORD			(*EndOptimized2D)();
 	DWORD			(*SetOptimized2DBlend)(DWORD blend);
@@ -329,7 +336,7 @@ public:
 
 extern ILTClient* g_pLTClient;
 
-class CClientMgr
+/*class CClientMgr
 {	
 public:
 	
@@ -348,6 +355,39 @@ public:
 	BYTE*			m_pClientFileMgr;
 	char*			m_ResTrees[MAX_RESTREES];
     DWORD			m_nResTrees;
+};*/
+
+class CClientShell // 5660
+{
+public:
+	
+	BYTE m_Data1[20];
+	float m_LastGameTime;
+	float m_GameTime;
+	float m_GameFrameTime;
+};
+
+class CClientMgr
+{	
+public:
+	
+	BYTE			m_Data1[1220];
+	ILTClient*		m_pLTClient;
+
+	BYTE			m_Data11[344];
+	void*			m_pClientShell;
+	
+	BYTE			m_Data2[3392]; // 3740
+	float			m_CurTimeCopy;
+	float			m_FrameTime;
+	float			m_CurTime;
+	BYTE			m_Data3[684];
+	CClientShell*	m_pCurShell;
+	BYTE			m_Data4[36];
+	void*			m_pClientFileMgr;
+	char*			m_ResTrees[MAX_RESTREES];
+    DWORD			m_nResTrees;
+	void*			m_pDemoMgr;
 };
 
 class CClientMgrBase
@@ -359,11 +399,39 @@ public:
 	//void*			m_pClientShell;
 };
 
+class CServerMgr
+{	
+public:
+	
+	BYTE			m_Data1[2668];
+	DWORD			m_dwCRC32CheckResult;
+	BYTE			m_Data2[76]; // 84
+	float			m_FrameTime;
+	float			m_LastServerFPS;
+	float			m_TimeOffset;
+	BYTE			m_Data3[16]; // 24
+	float			m_GameTime;
+	DWORD			m_nTargetTimeSteps;
+	float			m_TrueFrameTime;
+	float			m_TrueLastTime;
+	BYTE			m_Data4[852]; // 884 972 3644
+	void*			m_pServerFileMgr;
+};
+
+class CServerMgrBase
+{
+public:
+	
+	CServerMgr* m_pServerMgr;
+};
+
+extern CServerMgrBase* g_pServerMgr;
 extern CClientMgrBase* g_pClientMgr;
 
 void CreateFrameRateFontSurfaces();
-//void CreateIntroductionSurface();
+void CreateIntroductionSurface();
 BOOL RegisterRawMouseDevice();
 void ProcessRawMouseInput(LPARAM lParam, LONG& lLastX, LONG& lLastY);
+void EngineHack_WriteData(HANDLE hProcess, LPVOID lpAddr, BYTE* pNew, BYTE* pOld, DWORD dwSize);
 void EngineHack_WriteFunction(HANDLE hProcess, LPVOID lpAddr, DWORD dwNew, DWORD& dwOld);
 void EngineHack_WriteCall(HANDLE hProcess, LPVOID lpAddr, DWORD dwNew, BOOL bStructCall);
