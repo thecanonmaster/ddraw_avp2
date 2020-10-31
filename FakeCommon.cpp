@@ -2,7 +2,9 @@
 #include "numfont.h"
 
 BOOL g_bDgVoodooMode = FALSE;
-BOOL g_bNoCompatWarning = FALSE;
+BOOL g_bCleanMode = FALSE;
+char g_szProfile[64];
+char g_szProfileDescription[256];
 BOOL g_bDontShutdownRenderer = FALSE;
 BOOL g_bShowFPS = FALSE;
 BOOL g_bDrawFPS = TRUE;
@@ -10,10 +12,11 @@ DWORD g_dwWidth = 1024;
 DWORD g_dwHeight = 768;
 BOOL g_bWindowedSet = FALSE;
 DWORD g_bWindowed = 0;
-float g_fMaxFPS = 60;
+float g_fMaxFPS = 0;
 DWORD g_nFrameLimiterSleep = 0;
 BOOL g_bCameraFOVFix = FALSE;
 BOOL g_bCameraFOVFix2 = FALSE;
+float g_fCameraFOVXScaler = 1.0f;
 BOOL g_bViewModelFOVFix = FALSE;
 BOOL g_bSolidDrawingFix = FALSE;
 BOOL g_bIntelHDFix = FALSE;
@@ -44,7 +47,7 @@ LONG g_lRMILastY = 0;
 FontList g_FontList;
 DWORD g_hWhitePixelSurface = NULL;
 float g_fIntroductionStartTime = 0.0f;
-DWORD g_hIntroductionSurface[5] = { NULL, NULL, NULL, NULL, NULL };
+DWORD g_hIntroductionSurface[INTRODUCTION_LINES] = { NULL, NULL, NULL, NULL, NULL };
 DWORD g_hFrameRateFontSurface[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 int g_nLastFrameRate = 0;
 //SolidSurfaceList g_SolidSurfaceList;
@@ -213,7 +216,7 @@ void FontList_Clear(BOOL bDeleteSurfaces)
 			g_hWhitePixelSurface = NULL;
 		}
 		
-		for (int i = 0; i < 5 ; i++)
+		for (int i = 0; i < INTRODUCTION_LINES ; i++)
 		{
 			if (g_hIntroductionSurface[i])
 			{
@@ -380,18 +383,26 @@ void CreateFrameRateFontSurfaces()
 void CreateIntroductionSurface()
 {
 	char szTitle[64];
-	char* szIntro[5];
+	char szProfile[64];
+	char szDescription[256];
+
+	char* szIntro[INTRODUCTION_LINES];
 	sprintf(szTitle, APP_NAME, APP_VERSION);
 	szIntro[0] = szTitle;
-	szIntro[1] = "This wrapper is is not compatible with MSP v2.0+ and PaybackTime v0.2+";
-	szIntro[2] = "If you are starting one of these mods, please remove ddraw.dll from game directory";
+	sprintf(szProfile, "Active profile = %s", g_szProfile);
+	szIntro[1] = szProfile;
+	sprintf(szDescription, "Profile description = %s", g_szProfileDescription);
+	szIntro[2] = szDescription;
 	szIntro[3] = "Page Up - borderless window toggle";
 	szIntro[4] = "Page Down - draw FPS counter toggle";
-	DWORD dwColorMap[5] = { 0x0000FF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFFFF, 0x00FFFFFF };
+	DWORD dwColorMap[INTRODUCTION_LINES] = { 0x0000FF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFFFF, 0x00FFFFFF };
+
+	if (g_bCleanMode) 
+		dwColorMap[1] = 0x00FF0000;
 
 	DWORD hFont = g_pLTClient->CreateFont("Terminal", INTRODUCTION_FONT_WIDTH, INTRODUCTION_FONT_HEIGHT, FALSE, FALSE, FALSE);
 	
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < INTRODUCTION_LINES; i++)
 	{
 		DWORD hString = ILTCSBase_CreateString(szIntro[i]);
 		g_hIntroductionSurface[i] = g_pLTClient->CreateSurfaceFromString(hFont, hString, dwColorMap[i], 0, 0, 0);
@@ -399,4 +410,48 @@ void CreateIntroductionSurface()
 	}
 
 	g_pLTClient->DeleteFont(hFont);
+}
+
+BOOL GetSectionString(char* szSection, char* szKey, char* szValue)
+{
+	int nKeyLen = strlen(szKey);
+	int nCurrStart = 0;
+	char* szCurr = szSection;
+	int i = 0;
+	
+	while (true)
+	{
+		if (szSection[i] == 0)
+		{			
+			szCurr = szSection + nCurrStart;
+			if (!strncmp(szCurr, szKey, nKeyLen) && szCurr[nKeyLen] == '=')
+			{
+				strcpy(szValue, szCurr + nKeyLen + 1);
+				return TRUE;
+			}
+
+			if (szSection[i + 1] == 0)
+				return FALSE;
+
+			nCurrStart = i + 1;
+		}
+		
+		i++;
+	}
+}
+
+int GetSectionInt(char* szSection, char* szKey, int nDefault)
+{
+	char szValue[128];
+	BOOL bRet = GetSectionString(szSection, szKey, szValue);
+
+	return bRet ? atoi(szValue) : nDefault;
+}
+
+float GetSectionFloat(char* szSection, char* szKey, float fDefault)
+{
+	char szValue[128];
+	BOOL bRet = GetSectionString(szSection, szKey, szValue);
+	
+	return bRet ? atof(szValue) : fDefault;
 }

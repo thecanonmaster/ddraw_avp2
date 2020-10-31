@@ -1,6 +1,9 @@
 #include <vector>
 
 extern BOOL g_bDgVoodooMode;
+extern BOOL g_bCleanMode;
+extern char g_szProfile[64];
+extern char g_szProfileDescription[256];
 extern BOOL g_bDontShutdownRenderer;
 extern BOOL g_bShowFPS;
 extern BOOL g_bDrawFPS;
@@ -12,6 +15,7 @@ extern float g_fMaxFPS;
 extern DWORD g_nFrameLimiterSleep;
 extern BOOL g_bCameraFOVFix;
 extern BOOL g_bCameraFOVFix2;
+extern float g_fCameraFOVXScaler;
 extern BOOL g_bViewModelFOVFix; 
 extern BOOL g_bSolidDrawingFix;
 extern BOOL g_bIntelHDFix;
@@ -39,7 +43,8 @@ extern LONG g_lRMILastY;
 extern int g_nLastFrameRate;
 
 #define APP_NAME		"D3D7FIX v%.2f for Aliens vs Predator 2"
-#define APP_VERSION		0.16f
+#define APP_VERSION		0.2f
+#define CVAR_PROFILE	"D3D7FixAVP2Profile"
 
 #define FONT_LIST_UPDATE_TIME		5.0f
 #define FONT_LIST_CLEANUP_TIME		180.0f
@@ -50,6 +55,7 @@ extern int g_nLastFrameRate;
 #define INTRODUCTION_FONT_HEIGHT	18
 #define INTRODUCTION_FONT_WIDTH		10
 #define INTRODUCTION_TIME			30.0f
+#define INTRODUCTION_LINES			5
 
 #define FRAME_RATE_FONT_HEIGHT	5
 #define FRAME_RATE_FONT_WIDTH	3
@@ -57,7 +63,6 @@ extern int g_nLastFrameRate;
 #define FRAME_RATE_UPDATE_TIME	0.2f
 #define FRAME_RATE_LEVEL_RED	30
 #define FRAME_RATE_LEVEL_YELLOW	55
-
 
 #define FLIPSCREEN_CANDRAWCONSOLE	(1<<0)
 #define FLIPSCREEN_COPY				(1<<1)
@@ -136,7 +141,7 @@ typedef std::list<Font*> FontList;
 extern FontList g_FontList;
 extern DWORD g_hWhitePixelSurface;
 extern float g_fIntroductionStartTime;
-extern DWORD g_hIntroductionSurface[5];
+extern DWORD g_hIntroductionSurface[INTRODUCTION_LINES];
 extern DWORD g_hFrameRateFontSurface[10];
 //extern SolidSurfaceList g_SolidSurfaceList;
 
@@ -435,3 +440,8 @@ void ProcessRawMouseInput(LPARAM lParam, LONG& lLastX, LONG& lLastY);
 void EngineHack_WriteData(HANDLE hProcess, LPVOID lpAddr, BYTE* pNew, BYTE* pOld, DWORD dwSize);
 void EngineHack_WriteFunction(HANDLE hProcess, LPVOID lpAddr, DWORD dwNew, DWORD& dwOld);
 void EngineHack_WriteCall(HANDLE hProcess, LPVOID lpAddr, DWORD dwNew, BOOL bStructCall);
+
+
+BOOL GetSectionString(char* szSection, char* szKey, char* szValue);
+int GetSectionInt(char* szSection, char* szKey, int nDefault);
+float GetSectionFloat(char* szSection, char* szKey, float fDefault);

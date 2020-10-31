@@ -6,8 +6,6 @@ typedef HRESULT (__stdcall *BltFast_Type) (LPDIRECTDRAWSURFACE7, DWORD, DWORD, L
 Blt_Type g_dwOriginalBlt = NULL;
 BltFast_Type g_dwOriginalBltFast = NULL;
 
-DWORD g_dwDDSLightMapVtable7[49]; 
-
 HRESULT __stdcall FakeIDDrawSurface7LM_Blt(LPDIRECTDRAWSURFACE7 f, LPRECT a,LPDIRECTDRAWSURFACE7 b, LPRECT c,DWORD d, LPDDBLTFX e)
 {			
 	if (!b) 
@@ -133,7 +131,6 @@ FakeIDDraw7::~FakeIDDraw7(void)
 
 }
 
-
 HRESULT __stdcall FakeIDDraw7::QueryInterface (REFIID a, LPVOID FAR * b)
 {
 
@@ -205,27 +202,25 @@ HRESULT  __stdcall FakeIDDraw7::CreateSurface(LPDDSURFACEDESC2 lpDDSurfaceDesc2,
 		HRESULT hResult = m_pIDDraw->CreateSurface(lpDDSurfaceDesc2, lplpDDSurface, pUnkOuter);
 		if (hResult == DD_OK)
 		{
-			DWORD* dwOriginalVtable = (DWORD*)*lplpDDSurface;
-			memcpy(g_dwDDSLightMapVtable7, (void*)*dwOriginalVtable, 49 * sizeof(DWORD));
+
+			DWORD* pOrigTable = (DWORD*)*(DWORD*)*lplpDDSurface;
 
 			if (!g_dwOriginalBlt)
 			{
-				g_dwOriginalBlt = (Blt_Type)g_dwDDSLightMapVtable7[5];
-				g_dwOriginalBltFast = (BltFast_Type)g_dwDDSLightMapVtable7[7];
-				//g_dwOriginalLock = (Lock_Type)g_dwDDSLightMapVtable7[25];
-				//g_dwOriginalUnlock = (Unlock_Type)g_dwDDSLightMapVtable7[32];
+				g_dwOriginalBlt = (Blt_Type)pOrigTable[5];
+				g_dwOriginalBltFast = (BltFast_Type)pOrigTable[7];
+				//g_dwOriginalLock = (Lock_Type)pOrigTable[25];
+				//g_dwOriginalUnlock = (Unlock_Type)pOrigTable[32];
 			}
 			
-			g_dwDDSLightMapVtable7[5] = (DWORD)FakeIDDrawSurface7LM_Blt;
-			g_dwDDSLightMapVtable7[7] = (DWORD)FakeIDDrawSurface7LM_BltFast;
+			pOrigTable[5] = (DWORD)FakeIDDrawSurface7LM_Blt;
+			pOrigTable[7] = (DWORD)FakeIDDrawSurface7LM_BltFast;
 			//g_dwDDSLightMapVtable7[25] = (DWORD)FakeIDDrawSurface7LM_Lock;
 			//g_dwDDSLightMapVtable7[32] = (DWORD)FakeIDDrawSurface7LM_Unlock;
-			dwOriginalVtable[0] = (DWORD)g_dwDDSLightMapVtable7;
 		}
 
 		return hResult;
-	}
-	
+	}	
 	
 	HRESULT hResult = m_pIDDraw->CreateSurface(lpDDSurfaceDesc2, lplpDDSurface, pUnkOuter);
 

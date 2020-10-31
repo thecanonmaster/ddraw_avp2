@@ -86,31 +86,61 @@ HRESULT __stdcall FakeD3DDevice_Load(LPDIRECT3DDEVICE7 lpDevice, LPDIRECTDRAWSUR
 	return lpDestTex->Blt(NULL, lpSrcTex, NULL, DDBLT_WAIT, 0);
 }
 
-void ReadConfig(char* szFilename)
+void PreReadConfig(char* szFilename)
 {
-	g_bDontShutdownRenderer = GetPrivateProfileInt("Misc", "DontShutdownRenderer", FALSE, szFilename);
-	g_bShowFPS = GetPrivateProfileInt("Misc", "ShowFPS", FALSE, szFilename);
-	g_nFrameLimiterSleep = GetPrivateProfileInt("Misc", "FrameLimiterSleep", FALSE, szFilename);
+	g_bDgVoodooMode = GetPrivateProfileInt("Global", "DgVoodooMode", FALSE, szFilename);
+}
 
-	g_fMaxFPS = GetPrivateProfileInt("Compatibility", "MaxFPS", 60, szFilename);
-	g_bIntelHDFix = GetPrivateProfileInt("Compatibility", "Fix_IntelHD", FALSE, szFilename);
-	g_bRadeon5700Fix = GetPrivateProfileInt("Compatibility", "Fix_Radeon5700", FALSE, szFilename);
-	g_bCameraFOVFix = GetPrivateProfileInt("Compatibility", "Fix_CameraFOV", FALSE, szFilename);
+void ReadConfig(char* szFilename, char* szProfile)
+{
+	if (!szProfile)
+		szProfile = "Clean";
+
+	strcpy(g_szProfile, szProfile);
+
+	logf(0, LINFO, "Profile = %s", szProfile);
+
+	char szSection[2048];
+	DWORD dwSectionSize = GetPrivateProfileSection(szProfile, szSection, 2048, szFilename);
+
+	g_szProfileDescription[0] = 0;
+	GetSectionString(szSection, "Misc_Description", g_szProfileDescription);
+	logf(0, LINFO, "ProfileDescription = %s", g_szProfileDescription);
+
+	g_bCleanMode = GetSectionInt(szSection, "Misc_CleanMode", FALSE);
+	logf(0, LINFO, "CleanMode = %d", g_bCleanMode);
+
+	//if (g_bDgVoodooMode) g_bCleanMode = FALSE;
+	if (g_bCleanMode) return;
+
+	g_bDontShutdownRenderer = GetSectionInt(szSection, "Misc_DontShutdownRenderer", FALSE);
+	g_bShowFPS = GetSectionInt(szSection, "Misc_ShowFPS", FALSE);
+	g_nFrameLimiterSleep = GetSectionInt(szSection, "Misc_FrameLimiterSleep", 0);
+	g_fCameraFOVXScaler = GetSectionFloat(szSection, "Misc_CameraFOVXScaler", 1.0f);
+
+	if (g_fCameraFOVXScaler > 1.2f) g_fCameraFOVXScaler = 1.2f;
+	if (g_fCameraFOVXScaler < 0.8f)	g_fCameraFOVXScaler = 0.8f;
+
+	g_fMaxFPS = GetSectionInt(szSection, "Fix_MaxFPS", 0);
+
+	logf(0, LINFO, "Framelimiter = %d FPS", (int)g_fMaxFPS);
+	
+	g_bIntelHDFix = GetSectionInt(szSection, "Fix_IntelHD", FALSE);
+	g_bRadeon5700Fix = GetSectionInt(szSection, "Fix_Radeon5700", FALSE);
+	g_bCameraFOVFix = GetSectionInt(szSection, "Fix_CameraFOV", FALSE);
 	g_bCameraFOVFix2 = g_bCameraFOVFix;
-	g_bViewModelFOVFix = GetPrivateProfileInt("Compatibility", "Fix_ViewModelFOV", FALSE, szFilename);
-	g_bSolidDrawingFix = GetPrivateProfileInt("Compatibility", "Fix_SolidDrawing", FALSE, szFilename);
-	g_bLightLoadFix = GetPrivateProfileInt("Compatibility", "Fix_LightLoad", FALSE, szFilename);
-	g_bTWMDetailTexFix = GetPrivateProfileInt("Compatibility", "Fix_TWMDetailTex", FALSE, szFilename);
-	g_bTimeCalibrationFix = GetPrivateProfileInt("Compatibility", "Fix_TimeCalibration", FALSE, szFilename);
-	g_bFlipScreenFix = GetPrivateProfileInt("Compatibility", "Fix_FlipScreen", FALSE, szFilename);
-	g_bMiscCCFix = GetPrivateProfileInt("Compatibility", "Fix_MiscCC", FALSE, szFilename);
-	g_bRawMouseInputFix = GetPrivateProfileInt("Compatibility", "Fix_RawMouseInput", FALSE, szFilename);
+	g_bViewModelFOVFix = GetSectionInt(szSection, "Fix_ViewModelFOV", FALSE);
+	g_bSolidDrawingFix = GetSectionInt(szSection, "Fix_SolidDrawing", FALSE);
+	g_bLightLoadFix = GetSectionInt(szSection, "Fix_LightLoad", FALSE);
+	g_bTWMDetailTexFix = GetSectionInt(szSection, "Fix_TWMDetailTex", FALSE);
+	g_bTimeCalibrationFix = GetSectionInt(szSection, "Fix_TimeCalibration", FALSE);
+	g_bFlipScreenFix = GetSectionInt(szSection, "Fix_FlipScreen", FALSE);
+	g_bMiscCCFix = GetSectionInt(szSection, "Fix_MiscCC", FALSE);
+	g_bRawMouseInputFix = GetSectionInt(szSection, "Fix_RawMouseInput", FALSE);
 	g_bRawMouseInputFix2 = g_bRawMouseInputFix;
 
-	g_fRMIScaleGlobal = (float)GetPrivateProfileInt("RawMouseInput", "ScaleGlobal", 1000, szFilename) / 1000000.0f;
-	g_fRMIScaleY = GetPrivateProfileInt("RawMouseInput", "ScaleY", 1100000, szFilename) / 1000000.0f;
-
-	g_bDgVoodooMode = GetPrivateProfileInt("Main", "DgVoodooMode", FALSE, szFilename);
+	g_fRMIScaleGlobal = GetSectionFloat(szSection, "RMI_ScaleGlobal", 1.0f); 
+	g_fRMIScaleY = GetSectionFloat(szSection, "RMI_ScaleY", 1.1f);
 
 	if (g_bDgVoodooMode)
 	{
@@ -132,7 +162,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		{
 			char path[MAX_PATH];
 			HANDLE hProcess = NULL;	
-			ReadConfig(".\\ddraw_avp2.ini");
+			PreReadConfig(".\\ddraw_avp2.ini");
 
 			if (g_bDgVoodooMode)
 			{
@@ -181,11 +211,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			logf(0, LINFO, "Original ddraw.dll address = %08X", g_DDraw.dll);
 
 			if (g_bDgVoodooMode)
-			{
 				logf(0, LINFO, "dgVoodoo mode enabled");
-			}
 				
-			logf(0, LINFO, "Framelimiter = %d FPS", (int)g_fMaxFPS);
 			timeBeginPeriod(1);
 		}
 		break;
@@ -204,7 +231,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 void ApplyIntelHD_RHW_Fix()
 {
 	DWORD dwDLLAddress = (DWORD)GetModuleHandle("d3d.ren");
-	logf(0, LINFO, "d3d.ren address = %08X, applying IntelHD RHW fix", dwDLLAddress);
+	logf(0, LINFO, "Applying IntelHD RHW fix");
 	
 	float fIntelHDFix = 0.5f;
 	TLVertex* pVert = (TLVertex*)(dwDLLAddress + 0x58500);
@@ -282,7 +309,7 @@ float increaseHorFOV(float fFOVX, float fAspectRatio)
 void (*OldSetCameraFOV)(DWORD hObj, float fovX, float fovY);
 void MySetCameraFOV(DWORD hObj, float fovX, float fovY)
 {
-	fovX = increaseHorFOV(fovX, (float)g_dwWidth / (float)g_dwHeight);
+	fovX = increaseHorFOV(fovX, (float)(g_dwWidth * g_fCameraFOVXScaler) / (float)g_dwHeight);
 	OldSetCameraFOV(hObj, fovX, fovY);	
 }
 
@@ -580,7 +607,7 @@ void DrawIntroduction()
 
 	DWORD hScreen = g_pLTClient->GetScreenSurface();
 
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < INTRODUCTION_LINES; i++)
 		g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, g_hIntroductionSurface[i], NULL, 5, 5 + (i * INTRODUCTION_FONT_HEIGHT + 2), 0);
 }
 
@@ -643,7 +670,7 @@ void __fastcall MyIClientShell_Update(void* pShell)
 			if (g_hViewModelBaseFOVX)
 			{
 				float fOldBaseX = ILTCSBase_GetVarValueFloat(g_hViewModelBaseFOVX);
-				float fNewBaseX = atanf(tanf(fOldBaseX*MATH_PI/360.0f) * (float)g_dwHeight/(float)g_dwWidth * VIEW_MODE_BASE_ASPECT)*360.0f/MATH_PI;
+				float fNewBaseX = atanf(tanf(fOldBaseX*MATH_PI/360.0f) * (float)g_dwHeight/(float)(g_dwWidth * g_fCameraFOVXScaler) * VIEW_MODE_BASE_ASPECT)*360.0f/MATH_PI;
 				
 				char szTemp[64];
 				sprintf(szTemp, "ViewModelBaseFOVX %f", fNewBaseX);
@@ -663,7 +690,7 @@ void __fastcall MyIClientShell_Update(void* pShell)
 				float fBase = ILTCSBase_GetVarValueFloat(g_hViewModelBaseFOVX);			
 				float fCamera = fBase - fCurrXOffset;
 				
-				fCamera = atanf(tanf(fCamera * MATH_PI/360.0f) * 0.75f * (float)g_dwWidth/(float)g_dwHeight) * 360.0f/MATH_PI;
+				fCamera = atanf(tanf(fCamera * MATH_PI/360.0f) * 0.75f * (float)g_dwWidth/(float)(g_dwHeight /** g_fCameraFOVXScaler*/)) * 360.0f/MATH_PI;
 				g_fLastExtraFOVXOffset = fBase - fCamera;
 				
 				char szTemp[64];
@@ -737,10 +764,17 @@ void HookEngineStuff()
 	ILTCSBase_GetTime = (ILTCSBase_GetTime_type)pOrigTable[53];
 	ILTCSBase_GetFrameTime = (ILTCSBase_GetFrameTime_type)pOrigTable[54];
 
+	char* szProfile = NULL;
+	DWORD hDDrawAVP2Profile = g_pLTClient->GetConsoleVar(CVAR_PROFILE);
+	if (hDDrawAVP2Profile)
+		szProfile = ILTCSBase_GetVarValueString(hDDrawAVP2Profile);
+	
 	pOrigTable = (DWORD*)*(DWORD*)g_pClientMgr->m_pClientMgr->m_pClientShell;
 
 	if (g_pLTClient->Shutdown != MyShutdown)
 	{
+		ReadConfig(".\\ddraw_avp2.ini", szProfile);
+		
 		OldShutdown = g_pLTClient->Shutdown;
 		OldShutdownWithMessage = g_pLTClient->ShutdownWithMessage;
 		OldEndOptimized2D = g_pLTClient->EndOptimized2D;
@@ -765,6 +799,10 @@ void HookEngineStuff()
 		g_pLTClient->RunConsoleString("NearZ 4");
 		g_pLTClient->RunConsoleString("ReallyCloseNearZ 0.01");
 	}
+
+	BYTE nNew = 0x03;
+	BYTE nOld;
+	EngineHack_WriteData(hProcess, (LPVOID)(dwExeAddress + 0x9B5B5), &nNew, &nOld, 1);
 }
 
 void ApplyLightLoad_Fix()
@@ -936,7 +974,11 @@ HRESULT WINAPI FakeDirectDrawCreateEx(GUID FAR * lpGUID, LPVOID *lplpDD, REFIID 
 	LPVOID FAR dummy;
 	
 	HRESULT hResult = DirectDrawCreateEx_fn(lpGUID, &dummy, iid, pUnkOuter);
-	*lplpDD = (LPDIRECTDRAW7) new FakeIDDraw7((LPDIRECTDRAW7)dummy);
+
+	if (!g_bCleanMode)
+		*lplpDD = (LPDIRECTDRAW7) new FakeIDDraw7((LPDIRECTDRAW7)dummy);
+	else
+		*lplpDD = dummy;
 	
 	return hResult;
 }
